@@ -5,9 +5,9 @@
 HttpClient client;
 int variable_id = 0;
 int value = 0;
+int frecuencia = 0;
 char c;
 StaticJsonBuffer<1000> jsonBuffer;
-char cadena[40];
 
 /*
  * ARDUINOID define el id que tiene el
@@ -33,42 +33,42 @@ void setup() {
 
   //Se llama al servicio web de la Raspberry, pidiendo
   //la lista de equipos disponibles
-  client.get("http://192.168.1.10/urbanraspberry/equipos/"+ARDUINOID);
+  client.get("http://192.168.1.10/urbanraspberry/equipos/" + ARDUINOID);
 
   String equiposText = "";
-  //String slashed="";
+  String slashed = "";
   while (client.available()) {
     char c = client.read();
-    if(c=='"'){
-      //slashed+="\\";
+    if (c == '"') {
+      slashed += "\\";
     }
     equiposText += c;
-    //slashed+=c;
+    slashed += c;
   }
 
-
+  Serial.println(equiposText);
   JsonObject& equipos = jsonBuffer.parseObject(equiposText);
 
   if (!equipos.success())
   {
     Serial.println("parseObject() failed");
-  }else{
-    Serial.println("succes!!");
+  } else {
+    Serial.println("success!");
   }
 
+  //{"id":"arduinoyunuao","nombre":"ArduinoYunUAO","variables":[{"id":"d41d8cd98f00b204e9800998ecf8427e","nombre":"temperatura","pines":["a0"],"pinesTexto":"a0"}],"frecuencia":null}
 
-  JsonArray& ar = equipos[0]["ar"];
-  Serial.println((const char *) equipos[0]["ar"][0]["hola"]);
-  /*for(JsonArray::iterator it=equipos.begin(); it!=equipos.end(); ++it)
-  {
-      // *it contains the JsonVariant which can be casted as usuals
-      const char* sensor = (*it)["id"];
-      Serial.println(sensor);
+  //Obtenemos la frecuencia en que se debe realizar una lectura
+  //frecuencia = equipos["frecuencia"];
+  //Serial.println(frecuencia);
 
-      // this also works:
-      //value = it->as<const char*>();
+  JsonArray& variables = equipos["variables"].asArray();
+  variables.prettyPrintTo(Serial);
 
-  }*/
+  for (JsonArray::iterator it = variables.begin(); it != variables.end(); ++it){
+    const char* sensor = (*it)["id"];
+    Serial.println(sensor);
+  }
 }
 
 
@@ -83,6 +83,4 @@ void loop() {
 
   Serial.flush();
   delay(2000);
-
-  //prueba nicolas
 }
