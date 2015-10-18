@@ -25,16 +25,19 @@ void setup() {
   digitalWrite(13, LOW);
   Bridge.begin();
 
-  //Se prende la luz roja del Yun (led 13)
-  //como señal para saber que inició Bridge
+  /*
+   * Se prende la luz roja del Yun (led 13) como señal para saber que inició Bridge
+   */
   digitalWrite(13, HIGH);
 
 
   Serial.begin(9600);
   while (!Serial);
 
-  //Se llama al servicio web de la Raspberry, pidiendo
-  //la lista de equipos disponibles
+  /* 
+   *  Se llama al servicio web de la Raspberry, pidiendo
+   *  la lista de variables del equipo ARDUINOID
+  */
   client.get("http://192.168.1.10/urbanraspberry/equipos/" + ARDUINOID);
 
   String equiposText = "";
@@ -58,14 +61,14 @@ void setup() {
     Serial.println("success!");
   }
 
-  //Ejemplo del json que llega
+  //Ejemplo del json que llega despues de hacer un GET.
   //{"id":"arduinoyunuao","nombre":"ArduinoYunUAO","variables":[{"id":"d41d8cd98f00b204e9800998ecf8427e","nombre":"temperatura","pines":["a0"],"pinesTexto":"a0"}],"frecuencia":null}
 
-  //Captura el arreglo de las variables en un JsonArray&
+  //Captura el arreglo de las variables en un JsonArray&.
   JsonArray& variables = equipos["variables"].asArray();
-  //variables.prettyPrintTo(Serial); // para imprimir las variables con formato json
+  //variables.prettyPrintTo(Serial); // para imprimir las variables del dispositivo con formato json
 
-  // Se recorre el JsonArray& con un iterator para obtener los valores que hay dentro del arreglo variables
+  // Se recorre el JsonArray& con un iterator para obtener los valores que hay dentro del arreglo variables.
   int contador = 0;
   for (JsonArray::iterator it = variables.begin(); it != variables.end(); ++it) {
     const char* id_var = (*it)["id"];
@@ -73,6 +76,10 @@ void setup() {
     JsonArray& pines_var = (*it)["pines"].asArray();
     const char* pinesTexto_var = (*it)["pines"];
 
+    /*
+    * En los siguientes arreglos se alamcenan los valores de cada variable para que en cualquier momento
+    * se pueda acceder a ellas sin necesidad de recorrer todo el Array con un iterator.
+    */ 
     id_vars[contador] = id_var;
     nombre_vars[contador] = nombre_var;
     pinesTexto_vars[contador] = pinesTexto_var;
@@ -81,23 +88,21 @@ void setup() {
   //Obtenemos la frecuencia en que se debe realizar una lectura
   frecuencia = equipos["frecuencia"];
   //como aún la frecuencia es null se coloca un valor ficticio
-  frecuencia = 2000;
+  frecuencia = 20000;
 }
 
 void loop() {
-  //Realizar lectura de la primera variable
-  post("http://192.168.1.10/urbanraspberry/datosensor/", 0);
   
+  //Realizar un POST con el id de la variable numero 0 y el valor de la lectura de esa variable.
+  post("http://192.168.1.10/urbanraspberry/datosensor", 0);
   Serial.flush();
+  // La siguiente lectura se realizara después de que pase el tiempo que demarca la variable frecuencia.
   delay(frecuencia);
 }
 
 void post (String server, int i) {
   Process p;
-  //String cmd = "curl --data \" " + value +" \" ";
-  //String cmd = "curl --data  " + "variable_id=" + id_vars[i] + "&value=" + analogRead(A0) + " ";
-  String cmd = "curl --data  variable_id=" + id_vars[i] + "&value=" + analogRead(A0) + " ";
-  cmd = cmd + " " + server;
+  String cmd = "curl --data \"?variable_id="+id_vars[i]+"&value="+analogRead(A0)+ "\" "+server;
   Serial.println(cmd);
   p.runShellCommand(cmd);
   p.close();
