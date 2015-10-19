@@ -94,7 +94,7 @@ void setup() {
 void loop() {
   
   //Realizar un POST con el id de la variable numero 0 y el valor de la lectura de esa variable.
-  post("http://192.168.1.10/urbanraspberry/datosensor", 0);
+  post("http://192.168.1.10/urbanraspberry/datosensor/", 0);
   Serial.flush();
   // La siguiente lectura se realizara después de que pase el tiempo que demarca la variable frecuencia.
   delay(frecuencia);
